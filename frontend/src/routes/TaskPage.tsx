@@ -1,0 +1,1608 @@
+import { useMemo, useState } from "react";
+import type { FormEvent } from "react";
+import { Link, useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Scatter,
+  ScatterChart,
+  Tooltip,
+  XAxis,
+  YAxis,
+  Cell,
+} from "recharts";
+
+import TaskTabs from "../components/tasks/TaskTabs";
+import { Button } from "../components/ui/button";
+import { Card, CardDescription, CardTitle } from "../components/ui/card";
+import { Input } from "../components/ui/input";
+import { Textarea } from "../components/ui/textarea";
+import { api } from "../lib/api";
+import DigitalInequalityArticle from "./DigitalInequalityArticle";
+import MonitoringArticle from "./MonitoringArticle";
+import HealthcareArticle from "./HealthcareArticle";
+import NnGorodIdeyArticle from "./NnGorodIdeyArticle";
+import RegionalDigitalServicesArticle from "./RegionalDigitalServicesArticle";
+import DigitalParticipationArticle from "./DigitalParticipationArticle";
+import DigitalIdentityArticle from "./DigitalIdentityArticle";
+import SmartCitiesArticle from "./SmartCitiesArticle";
+import GovtechInnovationArticle from "./GovtechInnovationArticle";
+import MobilityInterfacePage from "./MobilityInterfacePage";
+import DigitalEthicsArticle from "./DigitalEthicsArticle";
+
+export type TaskDetail = {
+  id: number;
+  slug: string;
+  title: string;
+  short_description: string;
+  task_number: number;
+  theory_block: string;
+  methodology_block: string;
+  data_block: string;
+  results_block: string;
+  conclusion_block: string;
+  links_block: string;
+};
+
+const chartEndpoints: Record<string, string> = {
+  "monitoring-kostroma": "/data/monitoring-kostroma",
+  "crowdsourcing-roads": "/data/crowdsourcing-roads",
+  "kpi-suzdal": "/data/kpi-suzdal",
+  "digital-inequality": "/data/digital-inequality",
+};
+
+const TaskPage = () => {
+  const { slug } = useParams<{ slug: string }>();
+
+  const { data: task, isLoading } = useQuery<TaskDetail>({
+    queryKey: ["task", slug],
+    queryFn: async () => {
+      const response = await api.get<TaskDetail>(`/tasks/${slug}`);
+      return response.data;
+    },
+    enabled: Boolean(slug),
+  });
+
+  const { data: taskData } = useQuery({
+    queryKey: ["task-data", slug],
+    queryFn: async () => {
+      if (!slug) return null;
+      const response = await api.get(chartEndpoints[slug]);
+      return response.data;
+    },
+    enabled: Boolean(slug && chartEndpoints[slug as string]),
+  });
+
+  const { data: healthcareStats } = useQuery({
+    queryKey: ["healthcare-nekrasovka"],
+    queryFn: async () => {
+      const response = await api.get<HealthcareDatasetResponse>("/data/healthcare-nekrasovka");
+      const apiBase = api.defaults.baseURL?.replace(/\/api\/?$/, "/") ?? "http://localhost:8000/";
+      const mapUrl = new URL(response.data.map_path, apiBase).toString();
+      return { ...response.data, map_url: mapUrl } satisfies HealthcareDataset;
+    },
+    enabled: slug === "healthcare-nekrasovka",
+  });
+
+  const monitoringOverrides = useMemo(() => {
+    if (task?.slug !== "monitoring-kostroma") return null;
+    return {
+      theory:
+        "Мониторинг общественного мнения фиксирует живые настроения жителей. Мы соединяем описательную статистику, контент-анализ и словарный sentiment-analysis, чтобы видеть, какие факторы формируют лояльность или недовольство.",
+      methodology:
+        "Через веб-форму BM CaseFlow собрано 218 валидных ответов. После выгрузки выполнены агрегирование оценок, кодирование тематик и анализ тональности, чтобы сопоставить шкалы и свободные тексты.",
+      data:
+        "Анкета включает возраст, пол, статус занятости, пять шкал качества жизни (1–10), намерение уехать и открытый комментарий. Такой набор помогает связать количественные показатели с конкретными историями жителей.",
+      results:
+        "38% жителей уже планируют уехать, среди молодёжи 18–35 лет — 52%. Топ-3 причин: доходы (65%), инфраструктура (49%), досуг и самореализация (41%). 41% комментариев — негативные, причём у тех, кто хочет уехать, доля негатива достигает 57%.",
+      conclusion:
+        "Негативная тональность напрямую связана с миграционными планами. Молодёжь — главный риск, а нейтральный сегмент (37%) можно удержать активной коммуникацией. Позитивные 22% ценят спокойствие и природу — это ресурс для бренда региона.",
+      links: "",
+    };
+  }, [task]);
+
+  const aircraftOverrides = useMemo(() => {
+    if (task?.slug !== "aircraft-program") return null;
+    return {
+      theory:
+        "Госпрограмма построена вокруг дерева целей: конкурентоспособная авиационная отрасль как корень, а ветви — развитие научного и корпоративного потенциала, импортонезависимость и рост экономики.",
+      methodology:
+        "Используем комбинацию данных Strategy24, отчётов Минфина и KPI Объединённой авиастроительной корпорации. Сопоставляем финансирование, планы выпуска и фактические показатели за 2021–2027 гг.",
+      data:
+        "Финансирование: 220 млрд (2021), 46 млрд (8 мес. 2024), планы 2025–2027: 49–110 млрд. Производство: 166 единиц в 2024 г., целевые значения — 1000+ машин к 2030 г. KPI ОАК по выручке, рентабельности и расходам.",
+      results:
+        "Финансирование растёт, но ключевые KPI отстают: выпуск 166 единиц в 2024 г., доля иностранных самолётов &gt;80%, выручка гражданской продукции — 0% от цели, убыток ОАК 54,6 млрд руб.",
+      conclusion:
+        "Программа достигает частичных результатов (локализация компонентов, НИОКР), но цели по выпуску и финансовой эффективности не выполнены. Основные риски — зависимость от импорта, кадровый дефицит и высокая долговая нагрузка предприятий.",
+      links: "",
+    };
+  }, [task]);
+
+  const sections = useMemo(() => {
+    if (!task) return [];
+    const baseSections = [
+      { value: "theory", label: "Теория", content: task.theory_block },
+      { value: "methodology", label: "Методология", content: task.methodology_block },
+      { value: "data", label: "Данные", content: task.data_block },
+      { value: "results", label: "Результаты", content: task.results_block },
+      { value: "conclusion", label: "Выводы", content: task.conclusion_block },
+      { value: "links", label: "Ссылки", content: task.links_block },
+    ];
+    const override = monitoringOverrides || aircraftOverrides;
+    if (override) {
+      return baseSections
+        .map((section) => ({
+          ...section,
+          content: override[section.value as keyof typeof override] ?? section.content,
+        }))
+        .filter((section) => section.value !== "links" || section.content.trim().length > 0);
+    }
+    return baseSections;
+  }, [task, monitoringOverrides, aircraftOverrides]);
+
+  if (isLoading || !task) {
+    return <p className="text-center text-slate-500">Загружаем кейс...</p>;
+  }
+
+  if (task.slug === "digital-inequality") {
+    return (
+      <div className="space-y-8">
+        <Card className="relative overflow-hidden">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Задание {task.task_number}</p>
+              <h1 className="mt-3 text-3xl font-semibold text-slate-900 dark:text-white">{task.title}</h1>
+            </div>
+            <Button variant="ghost" asChild>
+              <Link to="/">← Вернуться к дашборду</Link>
+            </Button>
+          </div>
+          {task.short_description.split("\n\n").map((paragraph, index) => (
+            <p key={index} className="mt-3 text-lg text-slate-600 dark:text-slate-300">
+              {paragraph}
+            </p>
+          ))}
+        </Card>
+
+        <DigitalInequalityArticle />
+
+        <Card className="text-sm text-slate-500 dark:text-slate-400">
+          Итоговое досье формируется автоматически: в один поток собираются числовые показатели, комментарии и визуальные компоненты.
+        </Card>
+      </div>
+    );
+  }
+
+  if (task.slug === "monitoring-kostroma") {
+    return (
+      <div className="space-y-8">
+        <Card className="relative overflow-hidden">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Задание {task.task_number}</p>
+              <h1 className="mt-3 text-3xl font-semibold text-slate-900 dark:text-white">{task.title}</h1>
+            </div>
+            <Button variant="ghost" asChild>
+              <Link to="/">← Вернуться к дашборду</Link>
+            </Button>
+          </div>
+          {task.short_description.split("\n\n").map((paragraph, index) => (
+            <p key={index} className="mt-3 text-lg text-slate-600 dark:text-slate-300">
+              {paragraph}
+            </p>
+          ))}
+        </Card>
+
+        <MonitoringArticle />
+
+        <Card className="text-sm text-slate-500 dark:text-slate-400">
+          Итоговое досье формируется автоматически: в один поток собираются числовые показатели, комментарии и визуальные компоненты.
+        </Card>
+      </div>
+    );
+  }
+
+  if (task.slug === "healthcare-nekrasovka") {
+    return (
+      <div className="space-y-8">
+        <Card className="relative overflow-hidden">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Задание {task.task_number}</p>
+              <h1 className="mt-3 text-3xl font-semibold text-slate-900 dark:text-white">{task.title}</h1>
+            </div>
+            <Button variant="ghost" asChild>
+              <Link to="/">← Вернуться к дашборду</Link>
+            </Button>
+          </div>
+          {task.short_description.split("\n\n").map((paragraph, index) => (
+            <p key={index} className="mt-3 text-lg text-slate-600 dark:text-slate-300">
+              {paragraph}
+            </p>
+          ))}
+        </Card>
+
+        <HealthcareArticle />
+
+        <Card className="text-sm text-slate-500 dark:text-slate-400">
+          Итоговое досье формируется автоматически: в один поток собираются числовые показатели, карты доступности и рекомендации.
+        </Card>
+      </div>
+    );
+  }
+
+  if (task.slug === "nn-gorod-idey") {
+    // For nn-gorod-idey, we'll show both the article and the traditional sections approach
+    // so links are properly displayed
+    const links = task.links_block.split("\n").filter(Boolean);
+
+    return (
+      <div className="space-y-8">
+        <Card className="relative overflow-hidden">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Задание {task.task_number}</p>
+              <h1 className="mt-3 text-3xl font-semibold text-slate-900 dark:text-white">{task.title}</h1>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="ghost" asChild>
+                <Link to="/">← Вернуться к дашборду</Link>
+              </Button>
+              <Button variant="default" asChild className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                <Link to="/nn-gorod-idey-prototype">Прототип платформы</Link>
+              </Button>
+            </div>
+          </div>
+          {task.short_description.split("\n\n").map((paragraph, index) => (
+            <p key={index} className="mt-3 text-lg text-slate-600 dark:text-slate-300">
+              {paragraph}
+            </p>
+          ))}
+          <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
+            Работа над кейсом ведётся в рамках курса «Информационно-аналитические технологии государственного и муниципального управления».
+          </p>
+        </Card>
+
+        <NnGorodIdeyArticle />
+
+        {/* Links section for nn-gorod-idey */}
+        <TaskTabs
+          sections={[
+            { value: "links", label: "Ссылки", content: links.map((item) => `• ${item}`).join("\n\n") }
+          ]}
+        />
+
+        <Card className="text-sm text-slate-500 dark:text-slate-400">
+          Итоговое досье формируется автоматически: в один поток собираются идеи, голосования, обсуждения и аналитика.
+        </Card>
+      </div>
+    );
+  }
+
+  if (task.slug === "regional-digital-services") {
+    return (
+      <div className="space-y-8">
+        <Card className="relative overflow-hidden">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Задание {task.task_number}</p>
+              <h1 className="mt-3 text-3xl font-semibold text-slate-900 dark:text-white">{task.title}</h1>
+            </div>
+            <Button variant="ghost" asChild>
+              <Link to="/">← Вернуться к дашборду</Link>
+            </Button>
+          </div>
+          {task.short_description.split("\n\n").map((paragraph, index) => (
+            <p key={index} className="mt-3 text-lg text-slate-600 dark:text-slate-300">
+              {paragraph}
+            </p>
+          ))}
+        </Card>
+
+        <RegionalDigitalServicesArticle />
+
+        <Card className="text-sm text-slate-500 dark:text-slate-400">
+          Итоговое досье формируется автоматически: в один поток собираются числовые показатели, комментарии и визуальные компоненты.
+        </Card>
+      </div>
+    );
+  }
+
+  if (task.slug === "digital-participation") {
+    return (
+      <div className="space-y-8">
+        <Card className="relative overflow-hidden">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Задание {task.task_number}</p>
+              <h1 className="mt-3 text-3xl font-semibold text-slate-900 dark:text-white">{task.title}</h1>
+            </div>
+            <Button variant="ghost" asChild>
+              <Link to="/">← Вернуться к дашборду</Link>
+            </Button>
+          </div>
+          {task.short_description.split("\n\n").map((paragraph, index) => (
+            <p key={index} className="mt-3 text-lg text-slate-600 dark:text-slate-300">
+              {paragraph}
+            </p>
+          ))}
+        </Card>
+
+        <DigitalParticipationArticle />
+
+        <Card className="text-sm text-slate-500 dark:text-slate-400">
+          Итоговое досье формируется автоматически: в один поток собираются числовые показатели, комментарии и визуальные компоненты.
+        </Card>
+      </div>
+    );
+  }
+
+  if (task.slug === "digital-identity") {
+    return (
+      <div className="space-y-8">
+        <Card className="relative overflow-hidden">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Задание {task.task_number}</p>
+              <h1 className="mt-3 text-3xl font-semibold text-slate-900 dark:text-white">{task.title}</h1>
+            </div>
+            <Button variant="ghost" asChild>
+              <Link to="/">← Вернуться к дашборду</Link>
+            </Button>
+          </div>
+          {task.short_description.split("\n\n").map((paragraph, index) => (
+            <p key={index} className="mt-3 text-lg text-slate-600 dark:text-slate-300">
+              {paragraph}
+            </p>
+          ))}
+        </Card>
+
+        <DigitalIdentityArticle />
+
+        <Card className="text-sm text-slate-500 dark:text-slate-400">
+          Итоговое досье формируется автоматически: в один поток собираются числовые показатели, комментарии и визуальные компоненты.
+        </Card>
+      </div>
+    );
+  }
+
+  if (task.slug === "smart-cities") {
+    return (
+      <div className="space-y-8">
+        <Card className="relative overflow-hidden">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Задание {task.task_number}</p>
+              <h1 className="mt-3 text-3xl font-semibold text-slate-900 dark:text-white">{task.title}</h1>
+            </div>
+            <Button variant="ghost" asChild>
+              <Link to="/">← Вернуться к дашборду</Link>
+            </Button>
+          </div>
+          {task.short_description.split("\n\n").map((paragraph, index) => (
+            <p key={index} className="mt-3 text-lg text-slate-600 dark:text-slate-300">
+              {paragraph}
+            </p>
+          ))}
+        </Card>
+
+        <SmartCitiesArticle />
+
+        <Card className="text-sm text-slate-500 dark:text-slate-400">
+          Итоговое досье формируется автоматически: в один поток собираются числовые показатели, комментарии и визуальные компоненты.
+        </Card>
+      </div>
+    );
+  }
+
+  if (task.slug === "govtech-innovation") {
+    return (
+      <div className="space-y-8">
+        <Card className="relative overflow-hidden">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Задание {task.task_number}</p>
+              <h1 className="mt-3 text-3xl font-semibold text-slate-900 dark:text-white">{task.title}</h1>
+            </div>
+            <Button variant="ghost" asChild>
+              <Link to="/">← Вернуться к дашборду</Link>
+            </Button>
+          </div>
+          {task.short_description.split("\n\n").map((paragraph, index) => (
+            <p key={index} className="mt-3 text-lg text-slate-600 dark:text-slate-300">
+              {paragraph}
+            </p>
+          ))}
+        </Card>
+
+        <GovtechInnovationArticle />
+
+        <Card className="text-sm text-slate-500 dark:text-slate-400">
+          Итоговое досье формируется автоматически: в один поток собираются числовые показатели, комментарии и визуальные компоненты.
+        </Card>
+      </div>
+    );
+  }
+
+
+
+
+
+  if (task.slug === "digital-ethics") {
+    return (
+      <div className="space-y-8">
+        <Card className="relative overflow-hidden">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Задание {task.task_number}</p>
+              <h1 className="mt-3 text-3xl font-semibold text-slate-900 dark:text-white">{task.title}</h1>
+            </div>
+            <Button variant="ghost" asChild>
+              <Link to="/">← Вернуться к дашборду</Link>
+            </Button>
+          </div>
+          {task.short_description.split("\n\n").map((paragraph, index) => (
+            <p key={index} className="mt-3 text-lg text-slate-600 dark:text-slate-300">
+              {paragraph}
+            </p>
+          ))}
+        </Card>
+
+        <DigitalEthicsArticle />
+
+        <Card className="text-sm text-slate-500 dark:text-slate-400">
+          Итоговое досье формируется автоматически: в один поток собираются числовые показатели, комментарии и визуальные компоненты.
+        </Card>
+      </div>
+    );
+  }
+
+  if (task.slug === "mobility-360") {
+    return (
+      <div className="space-y-8">
+        <Card className="relative overflow-hidden">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Задание {task.task_number}</p>
+              <h1 className="mt-3 text-3xl font-semibold text-slate-900 dark:text-white">{task.title}</h1>
+            </div>
+            <Button variant="ghost" asChild>
+              <Link to="/">← Вернуться к дашборду</Link>
+            </Button>
+          </div>
+          {task.short_description.split("\n\n").map((paragraph, index) => (
+            <p key={index} className="mt-3 text-lg text-slate-600 dark:text-slate-300">
+              {paragraph}
+            </p>
+          ))}
+        </Card>
+
+        <MobilityInterfacePage />
+
+        <Card className="text-sm text-slate-500 dark:text-slate-400">
+          Итоговое досье формируется автоматически: в один поток собираются числовые показатели, комментарии и визуальные компоненты.
+        </Card>
+      </div>
+    );
+  }
+
+  const renderChart = () => {
+    switch (task.slug) {
+      case "monitoring-kostroma":
+        return null;
+      case "crowdsourcing-roads":
+        return (
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart data={taskData?.issues_by_type ?? []}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="issue_type" interval={0} angle={-15} textAnchor="end" height={80} />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="count" fill="#0ea5e9" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        );
+      case "kpi-suzdal":
+        return (
+          <ResponsiveContainer width="100%" height={320}>
+            <LineChart data={taskData?.monthly ?? []}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="month" />
+              <YAxis yAxisId="left" dataKey="portal_visits" />
+              <YAxis yAxisId="right" orientation="right" dataKey="conversion_rate" />
+              <Tooltip />
+              <Line yAxisId="left" type="monotone" dataKey="portal_visits" stroke="#2563eb" strokeWidth={3} />
+              <Line yAxisId="right" type="monotone" dataKey="conversion_rate" stroke="#16a34a" strokeWidth={3} />
+            </LineChart>
+          </ResponsiveContainer>
+        );
+      case "digital-inequality":
+        return null;
+      default:
+        return null;
+    }
+  };
+
+  const links = task.links_block.split("\n").filter(Boolean);
+
+  return (
+    <div className="space-y-8">
+      <Card className="relative overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Задание {task.task_number}</p>
+            <h1 className="mt-3 text-3xl font-semibold text-slate-900 dark:text-white">{task.title}</h1>
+          </div>
+          <Button variant="ghost" asChild>
+            <Link to="/">← Вернуться к дашборду</Link>
+          </Button>
+        </div>
+        {task.short_description.split("\n\n").map((paragraph, index) => (
+          <p key={index} className="mt-3 text-lg text-slate-600 dark:text-slate-300">
+            {paragraph}
+          </p>
+        ))}
+        <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
+          Работа над кейсом ведётся в рамках курса «Информационно-аналитические технологии государственного и муниципального управления».
+        </p>
+        {task.slug === "monitoring-kostroma" && (
+          <Button className="mt-4" asChild>
+            <Link to="/tasks/monitoring-kostroma/form">Заполнить веб-форму исследования</Link>
+          </Button>
+        )}
+      </Card>
+
+      <TaskTabs
+        sections={sections.map((section) =>
+          section.value === "links"
+            ? {
+                ...section,
+                content: links.map((item) => `• ${item}`).join("\n\n"),
+              }
+            : section,
+        )}
+      />
+
+      {renderChart() && (
+        <Card>
+          <CardTitle>Визуализация результатов</CardTitle>
+          <CardDescription className="mb-4">
+            Данные подтягиваются напрямую из CSV, с которыми работают Python-скрипты на backend.
+          </CardDescription>
+          {renderChart()}
+        </Card>
+      )}
+
+      {task.slug === "monitoring-kostroma" && <MonitoringInsights />}
+
+      {task.slug === "healthcare-nekrasovka" && healthcareStats && <HealthcareInsights data={healthcareStats} />}
+
+      {task.slug === "aircraft-program" && <AircraftProgramInsights />}
+
+      <TaskForm slug={task.slug} />
+
+      <Card className="text-sm text-slate-500 dark:text-slate-400">
+        Итоговое досье формируется автоматически: в один поток собираются числовые показатели, комментарии и визуальные компоненты.
+      </Card>
+    </div>
+  );
+};
+
+type TaskFormProps = {
+  slug: string;
+};
+
+const TaskForm = ({ slug }: TaskFormProps) => {
+  switch (slug) {
+    case "monitoring-kostroma":
+      return <MonitoringForm />;
+    case "nn-gorod-idey":
+      return <IdeaForm />;
+    case "kpi-suzdal":
+      return <KpiFeedbackForm />;
+    case "crowdsourcing-roads":
+      return <CrowdsourcingForm />;
+    default:
+      return null;
+  }
+};
+
+const monitoringCharts = {
+  ageIntent: [
+    { segment: "18-35", value: 52 },
+    { segment: "36+", value: 26 },
+  ],
+  intentions: [
+    { name: "Планируют", value: 38, color: "#f97316" },
+    { name: "Не планируют", value: 44, color: "#22c55e" },
+    { name: "Не решили", value: 18, color: "#94a3b8" },
+  ],
+  complaints: [
+    { name: "Доходы и работа", value: 64.5 },
+    { name: "Инфраструктура", value: 51.2 },
+    { name: "Госуслуги", value: 42.8 },
+    { name: "Досуг и культура", value: 38.7 },
+    { name: "Управление", value: 26.9 },
+  ],
+  sentiment: [
+    { name: "Негатив", value: 41, color: "#ef4444" },
+    { name: "Нейтрально", value: 37, color: "#fbbf24" },
+    { name: "Позитив", value: 22, color: "#22c55e" },
+  ],
+};
+
+const qualityDistribution = [
+  { label: "3 балла", count: 8 },
+  { label: "4 балла", count: 12 },
+  { label: "5 баллов", count: 27 },
+  { label: "6 баллов", count: 45 },
+  { label: "7 баллов", count: 50 },
+  { label: "8 баллов", count: 38 },
+  { label: "9 баллов", count: 25 },
+  { label: "10 баллов", count: 13 },
+];
+
+const scaleScores = [
+  { label: 'Качество жизни', value: '6.1' },
+  { label: 'Доходы', value: '5.3' },
+  { label: 'Инфраструктура', value: '4.8' },
+  { label: 'Госуслуги', value: '5.9' },
+  { label: 'Досуг', value: '4.6' },
+];
+
+const keyFindings = [
+  'Молодёжь 18-35 лет — 52% готовы к переезду при оценке жизни 5.7.',
+  'Топ причин недовольства: доходы, инфраструктура, досуг.',
+  '41% комментариев негативные; среди желающих уехать — 57%.',
+  '37% нейтральных комментариев — аудитория для точечных коммуникаций.',
+];
+
+const recommendations = [
+  'Показывать реальные истории карьерного роста и программы стажировок.',
+  'Делать прозрачные инфографики по ремонту дорог и благоустройству.',
+  "Отвечать на жалобы в формате 'вопрос — ответ' с конкретными сроками.",
+  'Усилить бренд региона через спокойствие, природу и события.',
+];
+
+
+const MonitoringInsights = () => {
+  return (
+    <div className="space-y-8">
+      <Card>
+        <CardTitle>Срез выборки (N = 218)</CardTitle>
+        <div className="mt-4 grid gap-4 text-sm text-slate-600 dark:text-slate-300 sm:grid-cols-2">
+          <div className="rounded-2xl bg-slate-50/80 p-4 dark:bg-slate-900/50">
+            <p>18–24 — 29%</p>
+            <p>25–35 — 33%</p>
+            <p>36–50 — 23%</p>
+            <p>50+ — 15%</p>
+          </div>
+          <div className="rounded-2xl bg-slate-50/80 p-4 dark:bg-slate-900/50">
+            <p>Женщины — 57%</p>
+            <p>Мужчины — 41%</p>
+            <p>Студенты — 22%</p>
+            <p>Работают — 54%</p>
+          </div>
+        </div>
+      </Card>
+      <Card>
+        <CardTitle>Средние оценки по шкалам (1–10)</CardTitle>
+        <table className="mt-4 w-full text-left text-sm text-slate-600 dark:text-slate-300">
+          <tbody>
+            {scaleScores.map((item) => (
+              <tr key={item.label} className="border-b border-slate-100 dark:border-slate-800">
+                <td className="py-2 font-medium">{item.label}</td>
+                <td className="py-2 text-right text-lg font-semibold text-slate-900 dark:text-white">{item.value}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Card>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardTitle>Распределение оценки качества жизни</CardTitle>
+          <div className="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
+            {qualityDistribution.map((item) => (
+              <div key={item.label}>
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">{item.label}</span>
+                  <span>{item.count} ответов</span>
+                </div>
+                <div className="mt-1 h-2 rounded-full bg-slate-100 dark:bg-slate-800">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-sky-500"
+                    style={{ width: `${Math.min((item.count / 60) * 100, 100)}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+        <Card>
+          <CardTitle>Намерение уехать</CardTitle>
+          <ResponsiveContainer width="100%" height={250}>
+            <PieChart>
+              <Pie data={monitoringCharts.intentions} dataKey="value" nameKey="name" outerRadius={90} label>
+                {monitoringCharts.intentions.map((entry) => (
+                  <Cell key={entry.name} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardTitle>Намерение уехать по возрасту</CardTitle>
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={monitoringCharts.ageIntent}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="segment" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="value" fill="#a855f7" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+          <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+            В группе 18–35 лет каждый второй рассматривает переезд, тогда как среди 36+ это всего 26%.
+          </p>
+        </Card>
+        <Card>
+          <CardTitle>Темы комментариев</CardTitle>
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={monitoringCharts.complaints}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="name" interval={0} angle={-10} textAnchor="end" height={80} />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="value" fill="#0ea5e9" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardTitle>Тональность комментариев</CardTitle>
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={monitoringCharts.sentiment}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                {monitoringCharts.sentiment.map((entry) => (
+                  <Cell key={entry.name} fill={entry.color} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </Card>
+        <Card>
+          <CardTitle>Примеры комментариев</CardTitle>
+          <div className="mt-4 grid gap-4 lg:grid-cols-2">
+            <div className="rounded-2xl border border-rose-100 bg-rose-50/60 p-4 text-sm text-rose-700 dark:border-rose-500/20 dark:bg-rose-950/30">
+              «Дороги ужасные, зарплаты в районе минималки, молодежи тут вообще делать нечего.»
+            </div>
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4 text-sm text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-950/30">
+              «Не всё так плохо — спокойно, тихо, природа отличная, но хочется больше перспектив.»
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardTitle>Ключевые выводы</CardTitle>
+          <ul className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
+            {keyFindings.map((item) => (
+              <li key={item} className="rounded-2xl bg-slate-50/70 px-4 py-2 dark:bg-slate-900/50">
+                {item}
+              </li>
+            ))}
+          </ul>
+        </Card>
+        <Card>
+          <CardTitle>Коммуникационные рекомендации</CardTitle>
+          <ul className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
+            {recommendations.map((item) => (
+              <li key={item} className="rounded-2xl bg-slate-50/70 px-4 py-2 dark:bg-slate-900/50">
+                {item}
+              </li>
+            ))}
+          </ul>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+const HealthcareInsights = ({ data }: { data: HealthcareDataset }) => {
+  const times = [5, 10, 15, 20];
+  const facilitiesPreview = data.facilities.slice(0, 8);
+  return (
+    <div className="space-y-8">
+      <Card>
+        <CardTitle>Сводка доступности</CardTitle>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl bg-slate-50/80 p-4 dark:bg-slate-900/40">
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Медицинских точек</p>
+            <p className="text-3xl font-semibold text-slate-900 dark:text-white">{data.stats.total_facilities}</p>
+            <p className="text-sm text-slate-600 dark:text-slate-300">амбулаторий и частных клиник</p>
+          </div>
+          <div className="rounded-2xl bg-rose-50/80 p-4 dark:bg-rose-950/40">
+            <p className="text-xs uppercase tracking-[0.3em] text-rose-500">Зоны недостаточного охвата</p>
+            <p className="text-3xl font-semibold text-rose-600 dark:text-rose-300">{data.stats.white_spots_percent}%</p>
+            <p className="text-sm text-rose-600 dark:text-rose-200">≈ {data.stats.white_spots_area_km2} км² без доступа &lt; 20 мин</p>
+          </div>
+        </div>
+      </Card>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardTitle>Покрытие по времени</CardTitle>
+          <table className="mt-4 w-full text-left text-sm text-slate-600 dark:text-slate-300">
+            <thead>
+              <tr>
+                <th className="py-2 font-semibold">Время</th>
+                <th className="py-2 font-semibold">Покрытие, %</th>
+                <th className="py-2 font-semibold">Площадь, км²</th>
+              </tr>
+            </thead>
+            <tbody>
+              {times.map((time) => (
+                <tr key={time} className="border-t border-slate-100 dark:border-slate-800">
+                  <td className="py-2">{time} мин</td>
+                  <td className="py-2 font-semibold">{data.stats.coverage_percent[String(time)]}%</td>
+                  <td className="py-2">{data.stats.coverage_area_km2[String(time)]}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+        <Card>
+          <CardTitle>Интерпретация</CardTitle>
+          <ul className="mt-4 space-y-2 text-sm text-slate-600 dark:text-slate-300">
+            <li>80% территории покрыты 15-минутной доступностью; только 58% — 10-минутной.</li>
+            <li>«Белые пятна» сосредоточены в новых кварталах на северо-востоке и юге района.</li>
+            <li>Дополнительные фельдшерские пункты в этих зонах сократят долю проблемных участков до &lt;10%.</li>
+          </ul>
+        </Card>
+      </div>
+
+      <Card>
+        <CardTitle>Интерактивная карта</CardTitle>
+        <iframe
+          title="Карта доступности Некрасовки"
+          src={data.map_url}
+          loading="lazy"
+          className="mt-4 h-[420px] w-full rounded-2xl border border-slate-200 dark:border-slate-800"
+        />
+      </Card>
+
+      <Card>
+        <CardTitle>Список медучреждений (пример)</CardTitle>
+        <ul className="mt-4 grid gap-3 text-sm text-slate-600 dark:text-slate-300 sm:grid-cols-2">
+          {facilitiesPreview.map((facility, index) => (
+            <li key={`${facility.name}-${index}`} className="rounded-2xl bg-slate-50/70 px-4 py-3 dark:bg-slate-900/40">
+              <p className="font-semibold text-slate-900 dark:text-white">{facility.name || "Без названия"}</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{facility.amenity}</p>
+            </li>
+          ))}
+          {data.facilities.length > facilitiesPreview.length && (
+            <li className="rounded-2xl bg-slate-50/70 px-4 py-3 text-sm text-slate-500 dark:bg-slate-900/40 dark:text-slate-400">
+              И ещё {data.facilities.length - facilitiesPreview.length} объектов…
+            </li>
+          )}
+        </ul>
+      </Card>
+    </div>
+  );
+};
+
+const aircraftGoals = [
+  {
+    title: "Подцель 1. Научный и корпоративный потенциал",
+    bullets: [
+      "Создание организаций мирового уровня в гражданской, спец- и сервисной авиации.",
+      "Развитие испытательной базы, НИОКР и компетенций сотрудников.",
+      "Современные программы для университетов, колледжей, НИИ.",
+    ],
+  },
+  {
+    title: "Подцель 2. Промышленная независимость",
+    bullets: [
+      "Локализация производства комплектующих и агрегатов.",
+      "Импортозамещение материалов и технологий для MC-21, SSJ-NEW, Ми-38, Ил-114-300 и др.",
+      "Совершенствование нормативно-правовой базы и сертификации.",
+    ],
+  },
+  {
+    title: "Подцель 3. Финансовые показатели",
+    bullets: [
+      "Рост выручки авиационных компаний, повышение производительности труда и рентабельности.",
+      "Увеличение экспорта, снижение доли иностранных самолётов (цель — <20% парка).",
+    ],
+  },
+];
+
+const aircraftFinancingTable = [
+  { year: "2021", source: "Правительство РФ", amount: "220 млрд + 60 млрд (MC-21)", note: "Поддержка серийного производства, импортозамещение композитов и двигателей." },
+  { year: "2024", source: "Минфин / Интерфакс", amount: "46 млрд за 8 мес. (план 42,3 млрд)", note: "Ускоренное импортозамещение требует доп. субсидий." },
+  { year: "2025", source: "Фед.бюджет", amount: "49,1 млрд (подпрограмма 101,3 млрд)", note: "Фокус на выпуске самолётов и вертолётов." },
+  { year: "2026", source: "Фед.бюджет", amount: "65,1 млрд (подпрограмма 139,6 млрд)", note: "Рост инвестиций в локализацию и инфраструктуру." },
+  { year: "2027", source: "Фед.бюджет", amount: "109,7 млрд (подпрограмма)", note: "Смещение финансирования на среднесрочную перспективу." },
+  { year: "Итого по Strategy24", source: "Госпрограмма", amount: "Бюджет 714,2 млрд; профинансировано 229,7 млрд", note: "Остаток ~484 млрд ожидает исполнения." },
+];
+
+const aircraftProduction = [
+  { label: "2024 факт", value: 166, detail: "166 гражданских самолётов и вертолётов; -13% к 2023." },
+  { label: "2024 план", value: 190, detail: "План превышал фактический выпуск." },
+  { label: "До 2030", value: 1000, detail: "Цели: 140+ SSJ New, 270 MC-21-310, 70 Ил-114-300, 70 Ту-214 и 760+ вертолётов." },
+];
+
+const aircraftKpi = [
+  { metric: "Выручка от гражданской продукции", status: "0% от целевого значения" },
+  { metric: "Снижение административных расходов", status: "11% вместо 100%" },
+  { metric: "Рентабельность чистой прибыли и активов", status: "0%" },
+  { metric: "Чистый результат ОАК 2023", status: "-54,6 млрд руб." },
+];
+
+const aircraftEffectiveness = [
+  {
+    title: "Эффективность финансирования",
+    text: "46 млрд руб. / 166 ед. ≈ 277 млн руб. на единицу — показатель показывает, что значительная доля субсидий идёт на поддержку текущих поставок и импортозамещения.",
+  },
+  {
+    title: "Проблемы исполнения",
+    text: "Зависимость от импортных агрегатов, задержки сертификации и высокая долговая нагрузка ОАК приводят к невыполнению KPI и низкому выпуску.",
+  },
+];
+
+const aircraftEvaluation = [
+  {
+    direction: "Конкурентоспособная отрасль",
+    plan: "&gt;1000 самолётов к 2030, доля иностранных &lt;20%",
+    fact: "166 ед. в 2024, иностранная техника &gt;80%",
+    verdict: "Цель не достигнута",
+  },
+  {
+    direction: "Научный и кадровый потенциал",
+    plan: "Создание организаций мирового уровня, подготовка специалистов",
+    fact: "MC-21-310, Ил-114-300, Ту-214 развиваются, но сертификация затягивается",
+    verdict: "Частично достигнуто",
+  },
+  {
+    direction: "Финансовая эффективность",
+    plan: "Рост выручки, рентабельности, производительности",
+    fact: "KPI по выручке и прибыли не достигнуты, убыток 54,6 млрд",
+    verdict: "Не достигнуто",
+  },
+  {
+    direction: "Импортозамещение",
+    plan: "Локализация комплектующих и материалов",
+    fact: ">60 млрд руб. вложено в импортозамещение MC-21, ключевые компоненты заменены, но зависимость по авионике сохраняется",
+    verdict: "Частично достигнуто",
+  },
+];
+
+const aircraftRecommendations = [
+  "Фокус на импортонезависимых проектах (MC-21-310, SSJ-NEW, Ил-114-300, Ту-214) и ускорение сертификации.",
+  "Оптимизировать расходы и публично мониторить KPI (выручка, экспорт, производительность).",
+  "Стимулировать спрос: субсидии лизинга, снижение ставки по кредитам авиакомпаниям.",
+  "Расширять экспорт на рынки СНГ, Азии, Африки и развивать кадровый потенциал.",
+  "Разделить программу на треки (вертолёты, лайнеры, спецавиация) и привлекать независимых экспертов.",
+];
+
+const AircraftProgramInsights = () => {
+  const aircraftTree = [
+    {
+      title: "Научный и корпоративный потенциал",
+      items: [
+        "испытательные центры",
+        "кадры и обучение", 
+        "глобальные компетенции"
+      ]
+    },
+    {
+      title: "Импортонезависимость",
+      items: [
+        "локализация комплектующих",
+        "регуляторика",
+        "MC-21 / SSJ NEW"
+      ]
+    },
+    {
+      title: "Экономическая эффективность",
+      items: [
+        "рост выручки",
+        "производительность",
+        "экспорт и сервис"
+      ]
+    }
+  ];
+
+  const aircraftFinancing = [
+    { year: 2021, actual: 220, planned: 220 },
+    { year: 2024, actual: 46, planned: 42.3 },
+    { year: 2025, actual: 49.1, planned: 49.1 },
+    { year: 2026, actual: 65.1, planned: 65.1 },
+    { year: 2027, actual: 109.7, planned: 109.7 },
+  ];
+
+  const aircraftProduction = [
+    { label: "2024 факт", value: 166 },
+    { label: "2024 план", value: 190 },
+    { label: "До 2030", value: 1000 }
+  ];
+
+  const aircraftKpi = [
+    { metric: "Выручка гражданской продукции", status: "0% выполнения" },
+    { metric: "Снижение расходов", status: "11% вместо 100%" },
+    { metric: "Рентабельность чистой прибыли", status: "0%" },
+    { metric: "Чистый результат ОАК 2023", status: "-54,6 млрд руб." }
+  ];
+
+  const aircraftRecommendations = [
+    "Фокус на сертификации и выводе MC-21-310, SSJ-NEW, Ил-114-300.",
+    "Субсидии и льготный лизинг для авиакомпаний, чтобы ускорить замену иностранных бортов.",
+    "Публичный мониторинг KPI: выручка, экспорт, производительность труда.",
+    "Экспортная ориентация на рынки СНГ, Азии и Африки + развитие кадров и науки."
+  ];
+
+  return (
+    <div className="space-y-8">
+      <Card>
+        <CardTitle>Цели и задачи программы (логическая модель)</CardTitle>
+        <div className="mt-4 space-y-4 text-sm text-slate-600 dark:text-slate-300">
+          <p className="font-semibold">Стратегическая цель:</p>
+          <p>Создание конкурентоспособной авиационной отрасли и обеспечение третьего места России на мировом рынке производства авиационной техники (strategy24.ru).</p>
+          
+          <div className="mt-4 space-y-3">
+            <div>
+              <p className="font-semibold">Подцель 1. Развитие корпоративного и научно‑технического потенциала:</p>
+              <ul className="mt-1 ml-4 list-disc space-y-1">
+                <li>Создание организаций мирового уровня в сегментах гражданской авиации, спецавиации и сервисного обслуживания.</li>
+                <li>Развитие научного потенциала и испытательной базы, повышение компетенций сотрудников.</li>
+                <li>Развитие кадрового потенциала: обеспечение университетов, колледжей и НИИ современными программами обучения (strategy24.ru).</li>
+              </ul>
+            </div>
+            
+            <div>
+              <p className="font-semibold">Подцель 2. Промышленная независимость и импортозамещение:</p>
+              <ul className="mt-1 ml-4 list-disc space-y-1">
+                <li>Локализация и производство комплектующих и агрегатов на российской территории.</li>
+                <li>Переход на отечественные материалы и технологии – для MC‑21, SSJ‑New, Ми‑38, Ил‑114‑300 и других проектов.</li>
+                <li>Совершенствование нормативно‑правового регулирования и системы сертификации.</li>
+              </ul>
+            </div>
+            
+            <div>
+              <p className="font-semibold">Подцель 3. Рост финансовых и экономических показателей:</p>
+              <ul className="mt-1 ml-4 list-disc space-y-1">
+                <li>Рост выручки организаций авиационной промышленности.</li>
+                <li>Повышение производительности труда, рентабельности продукции и активов (strategy24.ru).</li>
+                <li>Увеличение экспортных поставок, снижение зависимости от иностранных самолётов (сейчас в авиапарке РФ около 80 % иностранной техники, www1.ru).</li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="mt-4">
+            <p className="font-semibold">Индикаторы (пример для дерева целей):</p>
+            <ul className="mt-1 ml-4 list-disc space-y-1">
+              <li>Выручка от реализации авиационной продукции.</li>
+              <li>Производительность труда и рентабельность активов/продукции.</li>
+              <li>Объём производства самолётов и вертолётов (шт./год).</li>
+              <li>Объём экспорта.</li>
+              <li>Доля локализованных комплектующих и доля импортозамещения по ключевым программам.</li>
+            </ul>
+          </div>
+        </div>
+      </Card>
+
+      <Card>
+        <CardTitle>Финансирование программы</CardTitle>
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full text-left text-sm text-slate-600 dark:text-slate-300">
+            <thead>
+              <tr className="border-b border-slate-200 dark:border-slate-700">
+                <th className="py-2 px-3 font-semibold">Год</th>
+                <th className="py-2 px-3 font-semibold">Источник</th>
+                <th className="py-2 px-3 font-semibold">Данные (руб.)</th>
+                <th className="py-2 px-3 font-semibold">Примечание</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-b border-slate-100 dark:border-slate-800">
+                <td className="py-2 px-3">2021</td>
+                <td className="py-2 px-3">Заявление премьер‑министра Михаила Мишустина</td>
+                <td className="py-2 px-3">На госпрограмму направлено 220 млрд; более 60 млрд выделено на импортозамещение самолёта МС‑21 (niieap.com)</td>
+                <td className="py-2 px-3">Поддержка серийного производства, импортозамещение композитов и двигателей.</td>
+              </tr>
+              <tr className="border-b border-slate-100 dark:border-slate-800">
+                <td className="py-2 px-3">2024</td>
+                <td className="py-2 px-3">Минфин/Интерфакс</td>
+                <td className="py-2 px-3">Плановое финансирование – 42,3 млрд; за 8 месяцев выделено 46 млрд (interfax.ru)</td>
+                <td className="py-2 px-3">Увеличение финансирования обусловлено необходимостью ускоренного импортозамещения.</td>
+              </tr>
+              <tr className="border-b border-slate-100 dark:border-slate-800">
+                <td className="py-2 px-3">2025</td>
+                <td className="py-2 px-3">Федеральный бюджет</td>
+                <td className="py-2 px-3">Планируется 49,1 млрд (подпрограмма «Производство самолётов и вертолётов» – 101,3 млрд) (interfax.ru)</td>
+                <td className="py-2 px-3"></td>
+              </tr>
+              <tr className="border-b border-slate-100 dark:border-slate-800">
+                <td className="py-2 px-3">2026</td>
+                <td className="py-2 px-3">Федеральный бюджет</td>
+                <td className="py-2 px-3">65,1 млрд (подпрограмма – 139,6 млрд) (interfax.ru)</td>
+                <td className="py-2 px-3"></td>
+              </tr>
+              <tr className="border-b border-slate-100 dark:border-slate-800">
+                <td className="py-2 px-3">2027</td>
+                <td className="py-2 px-3">Федеральный бюджет</td>
+                <td className="py-2 px-3">109,7 млрд (подпрограмма) (interfax.ru)</td>
+                <td className="py-2 px-3"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <div className="mt-4 p-4 rounded-2xl bg-slate-50/60 dark:bg-slate-900/50">
+          <p>Согласно данным портала Strategy24, общий бюджет программы составлял 714,2 млрд руб., из которых на момент оценки было профинансировано 229,7 млрд (остаток – около 484 млрд) (strategy24.ru). Это подразумевает значительное смещение финансирования на будущие годы.</p>
+        </div>
+      </Card>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardTitle>Финансирование госпрограммы</CardTitle>
+          <ResponsiveContainer width="100%" height={260}>
+            <LineChart data={aircraftFinancing}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="year" />
+              <YAxis unit=" млрд" />
+              <Tooltip />
+              <Line type="monotone" dataKey="planned" name="План" stroke="#94a3b8" strokeWidth={2} />
+              <Line type="monotone" dataKey="actual" name="Факт" stroke="#2563eb" strokeWidth={3} />
+            </LineChart>
+          </ResponsiveContainer>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+            В 2021 г. выделено 220 млрд руб.; в 2024 г. — 46 млрд за 8 месяцев; планы 2025–2027 достигают 109 млрд руб.
+          </p>
+        </Card>
+        <Card>
+          <CardTitle>План vs факт производства</CardTitle>
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={aircraftProduction}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="label" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="value" fill="#f97316" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+            Фактический выпуск 166 единиц в 2024 г. заметно ниже траектории, необходимой для 1000+ машин к 2030 г.
+          </p>
+        </Card>
+      </div>
+
+      <Card>
+        <CardTitle>Производственные результаты и эффективность</CardTitle>
+        <div className="mt-4 space-y-6 text-sm text-slate-600 dark:text-slate-300">
+          <div>
+            <h4 className="font-semibold mb-2">3.1 Производство самолётов и вертолётов</h4>
+            <p>В 2024 г. в России произведено 166 гражданских самолётов и вертолётов, что на 13 % меньше, чем в 2023 г. По данным BusinesStat, в 2024 г. более 80 % эксплуатируемых самолётов в России оставались иностранного производства (www1.ru).</p>
+            <p className="mt-2">В рамках госпрограммы до 2030 г. предполагается выпустить более 1000 отечественных самолётов, в том числе 140+ SSJ New, 270 MC‑21‑310, по 70 Ил‑114‑300 и Ту‑214 и более 760 вертолётов (www1.ru). Эти планы регулярно корректируются из‑за ограничений по сертификации и спросу.</p>
+          </div>
+          
+          <div>
+            <h4 className="font-semibold mb-2">3.2 Финансовые показатели Объединённой авиастроительной корпорации (ОАК)</h4>
+            <p>Основной исполнитель программы – ОАК. В годовом отчёте 2023 г. ОАК отчитывается о корпоративных KPI. Некоторые важные результаты:</p>
+            <ul className="mt-2 ml-4 list-disc space-y-1">
+              <li>Выручка от гражданской продукции: 0 % от целевого значения (планируемая выручка не получена) (reportcollection.inion.ru).</li>
+              <li>Снижение административных и операционных расходов: выполнено на 11 % (цель – 100 %) (reportcollection.inion.ru).</li>
+              <li>Рентабельность чистой прибыли и прибыльность активов: 0 % (показатели не достигнуты) (reportcollection.inion.ru).</li>
+              <li>Чистый убыток ОАК за 2023 г. – 54,6 млрд руб.; основные причины – резервы под обесценение активов и высокий уровень заимствований (reportcollection.inion.ru).</li>
+            </ul>
+            <p className="mt-2">Программа MC‑21 сталкивалась с задержками сертификации; в 2021 г. на импортозамещение было направлено более 60 млрд руб., что позволило заменить композитные крылья и двигатели на отечественные аналоги (niieap.com).</p>
+          </div>
+          
+          <div>
+            <h4 className="font-semibold mb-2">3.3 Экономическая эффективность (рубль на единицу результата)</h4>
+            <p>Для оценки эффективности можно разделить фактическое финансирование на количество произведённых самолётов/вертолётов. В 2024 г.:</p>
+            <ul className="mt-2 ml-4 list-disc space-y-1">
+              <li>Финансирование (8 месяцев): 46 млрд руб. (interfax.ru)</li>
+              <li>Производство: 166 единиц (www1.ru)</li>
+              <li>Средняя «стоимость» на единицу ≈ 46 млрд / 166 ≈ 277 млн руб.</li>
+            </ul>
+            <p className="mt-2">Это приближённая оценка: она не учитывает долгосрочные НИОКР, вертолёты могут отличаться по стоимости, и многие расходы на импортозамещение относятся к инфраструктуре. Однако она показывает, что значительная часть финансирования идёт на субсидирование текущих поставок и компенсацию издержек.</p>
+          </div>
+        </div>
+      </Card>
+
+      <Card>
+        <CardTitle>Анализ достижения целей</CardTitle>
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full text-left text-sm text-slate-600 dark:text-slate-300">
+            <thead>
+              <tr className="border-b border-slate-200 dark:border-slate-700">
+                <th className="py-2 px-3 font-semibold">Направление</th>
+                <th className="py-2 px-3 font-semibold">План / показатель</th>
+                <th className="py-2 px-3 font-semibold">Фактическое исполнение</th>
+                <th className="py-2 px-3 font-semibold">Итоговая оценка</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-b border-slate-100 dark:border-slate-800">
+                <td className="py-2 px-3 font-medium">Создание конкурентоспособной отрасли</td>
+                <td className="py-2 px-3">Рост производства отечественных самолётов и вертолётов (1000+ до 2030 г.), доля иностранных самолётов &lt; 20 %</td>
+                <td className="py-2 px-3">В 2024 г. произведено 166 ед., доля импортной техники &gt; 80 % (www1.ru)</td>
+                <td className="py-2 px-3 font-semibold text-amber-600 dark:text-amber-400">Цель не достигнута; зависимость от иностранных самолётов сохраняется</td>
+              </tr>
+              <tr className="border-b border-slate-100 dark:border-slate-800">
+                <td className="py-2 px-3 font-medium">Научный и кадровый потенциал</td>
+                <td className="py-2 px-3">Создание организаций мирового уровня; подготовка специалистов</td>
+                <td className="py-2 px-3">Достижения есть (разработка MC‑21‑310, Ил‑114‑300, Ту‑214), но сертификация и кадры сталкиваются с санкциями</td>
+                <td className="py-2 px-3 font-semibold text-blue-600 dark:text-blue-400">Частично достигнуто; сертификация отечественных самолётов затягивается</td>
+              </tr>
+              <tr className="border-b border-slate-100 dark:border-slate-800">
+                <td className="py-2 px-3 font-medium">Финансовая эффективность</td>
+                <td className="py-2 px-3">Выручка, рентабельность, производительность</td>
+                <td className="py-2 px-3">KPI ОАК по выручке, прибыли и рентабельности в 2023 г. не достигнуты (reportcollection.inion.ru); убыток 54,6 млрд руб. (reportcollection.inion.ru)</td>
+                <td className="py-2 px-3 font-semibold text-amber-600 dark:text-amber-400">Цель не достигнута; финансирование пока не превращается в финансовый результат</td>
+              </tr>
+              <tr>
+                <td className="py-2 px-3 font-medium">Импортозамещение</td>
+                <td className="py-2 px-3">Локализация комплектующих, снижение зависимостей</td>
+                <td className="py-2 px-3">На импортозамещение MC‑21 направлено &gt; 60 млрд руб., что позволило заменить ключевые компоненты (niieap.com)</td>
+                <td className="py-2 px-3 font-semibold text-blue-600 dark:text-blue-400">Частично достигнуто: локализация увеличилась, но зависимость от зарубежных авионики и агрегатов остаётся</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      <Card>
+        <CardTitle>Выводы и рекомендации</CardTitle>
+        <div className="mt-4 space-y-4 text-sm text-slate-600 dark:text-slate-300">
+          <p>Несмотря на значительное финансирование (свыше 220 млрд руб. только в 2021 г.), ключевые производственные и финансовые показатели программы остаются невыполненными. Рост производства самолётов отстаёт от планов; экономические показатели предприятий низкие.</p>
+          
+          <div>
+            <p className="font-semibold">Главные причины недостижения целей:</p>
+            <ul className="mt-1 ml-4 list-disc space-y-1">
+              <li>Зависимость от зарубежных комплектующих и задержки с импортозамещением, особенно по авионике и двигателям.</li>
+              <li>Санкции и перенос сроков сертификации самолётов (MC‑21, SSJ‑New), которые тормозят коммерческий выпуск.</li>
+              <li>Высокие издержки и долги предприятий (убыток ОАК 54,6 млрд руб. в 2023 г.) (reportcollection.inion.ru).</li>
+              <li>Недостаточный спрос на отечественную гражданскую технику внутри страны.</li>
+            </ul>
+          </div>
+          
+          <div>
+            <p className="font-semibold">Рекомендации:</p>
+            <ul className="mt-1 ml-4 list-disc space-y-1">
+              <li>Фокус на импортонезависимых проектах. Концентрировать ресурсы на сертификации и выводе на рынок MC‑21‑310, SSJ‑New, Ил‑114‑300 – самолётов, полностью построенных из отечественных материалов и агрегатов.</li>
+              <li>Оптимизация расходов и контроль эффективности. Создать единый центр мониторинга госпрограммы; внедрить KPI с публичной отчётностью для всех участников (выручка, производительность труда, экспортные поставки).</li>
+              <li>Механизмы стимулирования спроса. Субсидирование лизинга отечественных самолётов и снижение ставки по кредитам для авиакомпаний, чтобы ускорить замещение иностранного парка.</li>
+              <li>Экспортная ориентация и международное сотрудничество с дружественными странами. Программа должна учитывать потребности рынков СНГ, Азии, Африки.</li>
+              <li>Развитие кадров и науки. Увеличить финансирование университетов и НИИ, внедрять дуальное образование (учёба + работа на заводах), привлекать частные компании.</li>
+              <li>Управленческая реформа. Разделить программу на отдельные проекты с понятными целями и бюджетами; выделить отдельные треки для вертолётов, гражданских лайнеров и спецавиации; привлекать независимую экспертизу.</li>
+            </ul>
+          </div>
+        </div>
+      </Card>
+
+      <Card>
+        <CardTitle>Визуализация на платформе</CardTitle>
+        <div className="mt-4 space-y-4 text-sm text-slate-600 dark:text-slate-300">
+          <div>
+            <p className="font-semibold">Дерево целей:</p>
+            <p>Можно отобразить в виде интерактивной схемы (root: «Конкурентоспособная авиаотрасль» → ветки «Научный потенциал», «Импортозамещение», «Экономический рост» → листы «Выручка», «Количество самолётов», «Кадры» и т.д.).</p>
+          </div>
+          
+          <div>
+            <p className="font-semibold">Графики:</p>
+            <p>Столбчатые диаграммы с динамикой финансирования (2021–2026), линиями для фактического и планового выпуска самолётов, сравнением долей импортной и отечественной техники.</p>
+          </div>
+          
+          <div>
+            <p className="font-semibold">Таблица KPI:</p>
+            <p>Выручка, прибыль, производительность, убытки ОАК; эффективность (руб./ед. продукции).</p>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+};
+
+const MonitoringForm = () => {
+  const [form, setForm] = useState({
+    age: 30,
+    gender: "Женщина",
+    employment_type: "Госсектор",
+    life_quality_score: 7,
+    intent_to_leave: "Останусь",
+    comment: "",
+  });
+  const [status, setStatus] = useState<string | null>(null);
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    try {
+      await api.post("/forms/monitoring-kostroma", form);
+      setStatus("Ответ принят! Спасибо за участие.");
+    } catch (error) {
+      setStatus("Не удалось отправить форму");
+    }
+  };
+
+  return (
+    <Card>
+      <CardTitle>Форма мониторинга настроений</CardTitle>
+      <CardDescription className="mb-4">
+        Эти ответы попадают в общий отчёт BM CaseFlow и обновляют аналитические карточки.
+      </CardDescription>
+      <form className="grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
+        <div>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-widest text-slate-400">Возраст</label>
+          <Input
+            type="number"
+            value={form.age}
+            onChange={(e) => setForm((prev) => ({ ...prev, age: Number(e.target.value) }))}
+            min={16}
+            max={90}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-widest text-slate-400">Пол</label>
+          <Input value={form.gender} onChange={(e) => setForm((prev) => ({ ...prev, gender: e.target.value }))} />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-widest text-slate-400">Занятость</label>
+          <Input
+            value={form.employment_type}
+            onChange={(e) => setForm((prev) => ({ ...prev, employment_type: e.target.value }))}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-widest text-slate-400">Оценка 1–10</label>
+          <Input
+            type="number"
+            value={form.life_quality_score}
+            onChange={(e) => setForm((prev) => ({ ...prev, life_quality_score: Number(e.target.value) }))}
+            min={1}
+            max={10}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-widest text-slate-400">Планируете ли уехать</label>
+          <Input
+            value={form.intent_to_leave}
+            onChange={(e) => setForm((prev) => ({ ...prev, intent_to_leave: e.target.value }))}
+          />
+        </div>
+        <div className="md:col-span-2">
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-widest text-slate-400">Комментарий</label>
+          <Textarea
+            value={form.comment}
+            onChange={(e) => setForm((prev) => ({ ...prev, comment: e.target.value }))}
+            rows={3}
+          />
+        </div>
+        <div className="md:col-span-2 flex items-center justify-between">
+          <Button type="submit">Отправить</Button>
+          {status && <p className="text-sm text-slate-500">{status}</p>}
+        </div>
+      </form>
+    </Card>
+  );
+};
+
+const IdeaForm = () => {
+  const [form, setForm] = useState({
+    category: "Цифровые сервисы",
+    title: "",
+    description: "",
+    expected_impact: "",
+  });
+  const [status, setStatus] = useState<string | null>(null);
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    try {
+      await api.post("/forms/nn-gorod-idey", form);
+      setStatus("Идея сохранена! Она появится в CSV через секунду.");
+      setForm({ category: form.category, title: "", description: "", expected_impact: "" });
+    } catch (error) {
+      setStatus("Не удалось отправить идею");
+    }
+  };
+
+  return (
+    <Card>
+      <CardTitle>Оставить идею для «Нижний Новгород – Город Идей»</CardTitle>
+      <form className="mt-4 grid gap-4" onSubmit={handleSubmit}>
+        <div>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-widest text-slate-400">Категория</label>
+          <Input value={form.category} onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))} />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-widest text-slate-400">Заголовок</label>
+          <Input value={form.title} onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))} />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-widest text-slate-400">Описание</label>
+          <Textarea
+            value={form.description}
+            onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
+            rows={3}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-widest text-slate-400">Ожидаемый эффект</label>
+          <Textarea
+            value={form.expected_impact}
+            onChange={(e) => setForm((prev) => ({ ...prev, expected_impact: e.target.value }))}
+            rows={2}
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <Button type="submit">Отправить идею</Button>
+          {status && <p className="text-sm text-slate-500">{status}</p>}
+        </div>
+      </form>
+    </Card>
+  );
+};
+
+const CrowdsourcingForm = () => {
+  const [form, setForm] = useState({
+    district: "Центральный",
+    issue_type: "Плохой тротуар",
+    description: "",
+    priority: "Средний",
+  });
+  const [status, setStatus] = useState<string | null>(null);
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    try {
+      await api.post("/forms/crowdsourcing-roads", form);
+      setStatus("Обращение зарегистрировано — оно появилось в CSV");
+      setForm({ ...form, description: "" });
+    } catch (error) {
+      setStatus("Ошибка отправки");
+    }
+  };
+
+  return (
+    <Card>
+      <CardTitle>Краудсорсинговая заявка</CardTitle>
+      <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
+        <div>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-widest text-slate-400">Район</label>
+          <Input value={form.district} onChange={(e) => setForm((prev) => ({ ...prev, district: e.target.value }))} />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-widest text-slate-400">Тип проблемы</label>
+          <Input value={form.issue_type} onChange={(e) => setForm((prev) => ({ ...prev, issue_type: e.target.value }))} />
+        </div>
+        <div className="md:col-span-2">
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-widest text-slate-400">Описание</label>
+          <Textarea
+            value={form.description}
+            onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
+            rows={3}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-widest text-slate-400">Приоритет</label>
+          <Input value={form.priority} onChange={(e) => setForm((prev) => ({ ...prev, priority: e.target.value }))} />
+        </div>
+        <div className="md:col-span-2 flex items-center justify-between">
+          <Button type="submit">Отправить</Button>
+          {status && <p className="text-sm text-slate-500">{status}</p>}
+        </div>
+      </form>
+    </Card>
+  );
+};
+
+const KpiFeedbackForm = () => {
+  const [form, setForm] = useState({
+    service_name: "Регистрация по месту пребывания",
+    month: "2024-07",
+    wait_time_minutes: 15,
+    satisfaction_score: 8,
+    comment: "",
+  });
+  const [status, setStatus] = useState<string | null>(null);
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    try {
+      await api.post("/forms/kpi-suzdal", form);
+      setStatus("Отзыв сохранён — KPI обновятся после перезагрузки");
+    } catch (error) {
+      setStatus("Ошибка отправки отзыва");
+    }
+  };
+
+  return (
+    <Card>
+      <CardTitle>Форма оперативной обратной связи</CardTitle>
+      <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
+        <div>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-widest text-slate-400">
+            Электронная услуга
+          </label>
+          <Input
+            value={form.service_name}
+            onChange={(e) => setForm((prev) => ({ ...prev, service_name: e.target.value }))}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-widest text-slate-400">Месяц</label>
+          <Input value={form.month} onChange={(e) => setForm((prev) => ({ ...prev, month: e.target.value }))} />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-widest text-slate-400">
+            Время ожидания (мин)
+          </label>
+          <Input
+            type="number"
+            value={form.wait_time_minutes}
+            onChange={(e) => setForm((prev) => ({ ...prev, wait_time_minutes: Number(e.target.value) }))}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-widest text-slate-400">
+            Оценка 1–10
+          </label>
+          <Input
+            type="number"
+            value={form.satisfaction_score}
+            min={1}
+            max={10}
+            onChange={(e) => setForm((prev) => ({ ...prev, satisfaction_score: Number(e.target.value) }))}
+          />
+        </div>
+        <div className="md:col-span-2">
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-widest text-slate-400">Комментарий</label>
+          <Textarea value={form.comment} onChange={(e) => setForm((prev) => ({ ...prev, comment: e.target.value }))} />
+        </div>
+        <div className="md:col-span-2 flex items-center justify-between">
+          <Button type="submit">Поделиться отзывом</Button>
+          {status && <p className="text-sm text-slate-500">{status}</p>}
+        </div>
+      </form>
+    </Card>
+  );
+};
+
+export default TaskPage;
+
+type HealthcareDataset = {
+  map_url: string;
+} & HealthcareDatasetResponse;
+
+type HealthcareDatasetResponse = {
+  stats: {
+    total_facilities: number;
+    coverage_area_km2: Record<string, number>;
+    coverage_percent: Record<string, number>;
+    white_spots_area_km2: number;
+    white_spots_percent: number;
+  };
+  facilities: { name: string; amenity: string; lat?: number; lon?: number }[];
+  map_path: string;
+};

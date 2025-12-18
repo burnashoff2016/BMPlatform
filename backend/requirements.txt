@@ -1,0 +1,17 @@
+fastapi
+uvicorn[standard]
+jinja2
+sqlalchemy
+aiosqlite
+passlib[bcrypt]
+python-multipart
+python-dotenv
+pydantic
+matplotlib
+pandas
+scikit-learn
+osmnx
+geopandas
+networkx
+folium
+python-jose[cryptography]

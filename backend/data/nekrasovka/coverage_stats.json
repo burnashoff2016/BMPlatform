@@ -1,0 +1,17 @@
+{
+  "total_facilities": 43,
+  "coverage_area_km2": {
+    "5": 2.57,
+    "10": 4.75,
+    "15": 7.27,
+    "20": 8.83
+  },
+  "coverage_percent": {
+    "5": 22.8,
+    "10": 42.0,
+    "15": 64.3,
+    "20": 78.2
+  },
+  "white_spots_area_km2": 3.85,
+  "white_spots_percent": 34.1
+}
