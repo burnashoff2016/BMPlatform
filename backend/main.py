@@ -10,7 +10,37 @@ from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy.orm import Session
 
 from auth import get_current_user, router as auth_router
-from models import User as UserModel
+from config import ALLOWED_ORIGINS, DATA_DIR, STATIC_DIR
+from database import get_db, init_db
+from models import Task, User, User as UserModel
+from schemas import (
+    CrowdsourcingRoadsForm,
+    KpiSuzdalFeedbackForm,
+    MonitoringKostromaForm,
+    NNGorodIdeyForm,
+    TaskOut,
+)
+
+# Подключаем маршруты аутентификации с отключенной проверкой
+try:
+    from auth_mock import router as auth_mock_router
+    auth_to_use = auth_mock_router
+except ImportError:
+    # Если нет файла с фиктивной аутентификацией, используем оригинальный
+    auth_to_use = auth_router
+
+app = FastAPI(title="Цифровое государство: учебный портал кейсов")
+app.include_router(auth_to_use)
+
+NEKRASOVKA_DIR = DATA_DIR / "nekrasovka"
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 def get_current_user_disabled(db: Session = Depends(get_db)):
@@ -35,29 +65,6 @@ def get_current_user_disabled(db: Session = Depends(get_db)):
         db.refresh(user)
     
     return user
-from config import ALLOWED_ORIGINS, DATA_DIR, STATIC_DIR
-from database import get_db, init_db
-from models import Task, User
-from schemas import (
-    CrowdsourcingRoadsForm,
-    KpiSuzdalFeedbackForm,
-    MonitoringKostromaForm,
-    NNGorodIdeyForm,
-    TaskOut,
-)
-
-app = FastAPI(title="Цифровое государство: учебный портал кейсов")
-app.include_router(auth_router)
-
-NEKRASOVKA_DIR = DATA_DIR / "nekrasovka"
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 
 @app.on_event("startup")
@@ -458,6 +465,7 @@ def digital_inclusion_dfo_dataset(
             "authority_name": authority["authority_name"],
             "radar_values": authority_radar
         })
+    ]
     
     return {
         "authorities": authorities_data,
