@@ -12,7 +12,6 @@ engine = create_engine(
 if DATABASE_URL.startswith("sqlite"):
     with engine.connect() as conn:
         conn.execute(text("PRAGMA journal_mode=WAL;"))
-        conn.commit()
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 

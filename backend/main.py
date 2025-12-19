@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Dict, List
 
 import pandas as pd
-from fastapi import FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy.orm import Session
@@ -49,12 +49,12 @@ def append_csv_row(file_path: Path, fieldnames: List[str], payload: Dict[str, st
 
 # Все эндпоинты без аутентификации
 @app.get("/api/tasks", response_model=List[TaskOut])
-def list_tasks(db: Session = next(get_db)) -> List[TaskOut]:
+def list_tasks(db: Session = Depends(get_db)) -> List[TaskOut]:
     tasks = db.query(Task).order_by(Task.task_number).all()
     return [TaskOut.model_validate(task) for task in tasks]
 
 @app.get("/api/tasks/{slug}", response_model=TaskOut)
-def get_task(slug: str, db: Session = next(get_db)) -> TaskOut:
+def get_task(slug: str, db: Session = Depends(get_db)) -> TaskOut:
     task = db.query(Task).filter(Task.slug == slug).first()
     if not task:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
