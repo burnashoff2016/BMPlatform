@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { BarChart3, Home, Layers, Menu, MessageCircle, Moon, Settings as SettingsIcon, Sun, X } from "lucide-react";
+import { Home, Layers, Menu, MessageCircle, Moon, Settings as SettingsIcon, Sun, X } from "lucide-react";
 
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";

@@ -72,9 +72,9 @@ const DigitalInequalityArticle: React.FC = () => {
         const opt = {
           margin: 10,
           filename: "digital-inequality-research.pdf",
-          image: { type: "jpeg", quality: 0.98 },
+          image: { type: "jpeg" as const, quality: 0.98 },
           html2canvas: { scale: 2 },
-          jsPDF: { orientation: "portrait", unit: "mm", format: "a4" },
+          jsPDF: { orientation: "portrait" as const, unit: "mm", format: "a4" },
         };
         html2pdf.default().set(opt).from(element).save();
       }

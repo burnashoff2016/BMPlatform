@@ -76,8 +76,8 @@ const NnGorodIdeyPrototypePage: React.FC = () => {
 
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
-    exit: { opacity: 0, y: -20, transition: { duration: 0.3, ease: "easeIn" } },
+    visible: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -20 },
   };
 
   const itemVariants = {
@@ -91,6 +91,7 @@ const NnGorodIdeyPrototypePage: React.FC = () => {
       initial="hidden"
       animate="visible"
       exit="exit"
+      transition={{ duration: 0.6, ease: "easeOut" }}
       className="min-h-screen bg-gradient-to-br from-[#1A2B4C] to-[#0F172A] text-white p-8 md:p-12"
     >
       <div className="max-w-7xl mx-auto">
@@ -120,7 +121,7 @@ const NnGorodIdeyPrototypePage: React.FC = () => {
             <p className="mt-4 text-xl">Загружаем свежие идеи...</p>
           </motion.div>
         ) : (
-          <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-16">
+          <motion.div variants={containerVariants} initial="hidden" animate="visible" transition={{ duration: 0.6, ease: "easeOut" }} className="space-y-16">
             <section>
               <motion.h2 variants={itemVariants} className="text-4xl font-bold mb-8 text-slate-100">
                 Предложенные Идеи

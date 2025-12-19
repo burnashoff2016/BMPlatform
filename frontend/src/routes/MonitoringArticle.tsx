@@ -66,9 +66,6 @@ const MonitoringArticle: React.FC = () => {
           <h1 className="text-4xl font-bold">Мониторинг общественного мнения — Костромская область</h1>
           <p className="mt-2 text-lg text-slate-600 dark:text-slate-400">Анализ оценок качества жизни и миграционных намерений жителей региона</p>
           <p className="mt-3 text-sm text-slate-500">Автор: Артём Бурнашов</p>
-          <div className="mt-2 text-sm text-slate-500 italic">
-            Авторы: Артём Бурнашов и Мария Маклаева
-          </div>
         </div>
         <div className="flex gap-2 items-center print:hidden">
           <Button variant="outline" onClick={() => window.print()} className="flex items-center gap-2"><Printer size={14} /> Печать</Button>

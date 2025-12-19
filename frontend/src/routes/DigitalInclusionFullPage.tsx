@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, Navigate, Outlet, Route, Routes } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { 
   BarChart, 
   Bar, 
@@ -20,10 +20,10 @@ import {
 import * as Tabs from "@radix-ui/react-tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
-import { Download, ChevronLeft, ChevronRight, MapPin, TrendingUp, Users, BookOpen, FileText, Star, Award, Target, Globe, Volume2, Monitor, Languages, MessageCircle, Menu, X } from 'lucide-react';
+import { Download, MapPin, TrendingUp, Users, BookOpen, FileText, Star, Award, Target, Globe, Monitor, Languages, MessageCircle, Menu, X } from 'lucide-react';
 import { cn } from "../lib/utils";
 import { api } from "../lib/api";
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 interface Authority {
   region: number;
@@ -114,11 +114,11 @@ const DigitalInclusionFullPage: React.FC = () => {
       document.body.appendChild(element);
       
       const options = {
-        margin: [10, 5, 10, 5],
+        margin: [10, 5, 10, 5] as [number, number, number, number],
         filename: 'digital_inclusion_report.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
+        image: { type: 'jpeg' as const, quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' as const }
       };
       
       html2pdf().set(options).from(element).save().finally(() => {
@@ -461,7 +461,7 @@ const DigitalInclusionFullPage: React.FC = () => {
                             fill="url(#colorUv)" 
                             radius={[0, 4, 4, 0]}
                           >
-                            {data.authorities.map((entry, index) => (
+                            {data.authorities.map((_, index) => (
                               <stop key={`stop-${index}`} offset={`${(index / data.authorities.length) * 100}%`} stopColor="#4f46e5" />
                             ))}
                           </Bar>

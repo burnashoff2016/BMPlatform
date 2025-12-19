@@ -13,7 +13,6 @@ import DigitalInclusionDFOPage from "./routes/DigitalInclusionDFOPage";
 import DigitalInclusionReportPage from "./routes/DigitalInclusionReportPage";
 import DigitalInclusionFullPage from "./routes/DigitalInclusionFullPage";
 import DigitalInclusionMainPage from "./routes/DigitalInclusionMainPage";
-import NnGorodIdeyPrototypePage from "./routes/NnGorodIdeyPrototypePage";
 import NnGorodIdeyNewPrototypePage from "./routes/NnGorodIdeyNewPrototypePage";
 import RegionalDigitalServicesArticle from "./routes/RegionalDigitalServicesArticle";
 import KpiSuzdalArticle from "./routes/KpiSuzdalArticle";
