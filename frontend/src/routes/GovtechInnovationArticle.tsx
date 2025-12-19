@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import { Button } from "../components/ui/button";
-import { Download, Printer, TrendingUp, Target, BarChart3, Award } from "lucide-react";
+import { Download, Printer, TrendingUp, Award, BarChart3 } from "lucide-react";
 
 const GovtechInnovationArticle: React.FC = () => {
   const articleRef = useRef<HTMLDivElement>(null);

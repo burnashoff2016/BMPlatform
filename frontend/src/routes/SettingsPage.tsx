@@ -1,21 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   User, 
   Shield, 
   Bell, 
-  Moon, 
-  Sun, 
-  Eye, 
-  Key, 
   Palette,
   Globe,
-  Calendar,
-  Save,
-  Check,
-  X,
   Mail,
-  Phone
+  Phone,
+  X,
+  Save,
+  Check
 } from 'lucide-react';
 
 const SettingsPage = () => {

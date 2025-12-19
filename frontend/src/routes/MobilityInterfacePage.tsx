@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import { Button } from "../components/ui/button";
-import { Download, Printer, BookOpen, Users, Target, TrendingUp, Shield, Globe, Smartphone, BarChart3, Award, CheckCircle, XCircle, Navigation } from "lucide-react";
+import { Download, Printer, BookOpen, Users, Award, Navigation, BarChart3, Shield, CheckCircle, XCircle } from "lucide-react";
 
 const MobilityInterfacePage: React.FC = () => {
   const articleRef = useRef<HTMLDivElement>(null);

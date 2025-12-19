@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import { Button } from "../components/ui/button";
-import { Download, Printer, BookOpen, Users, Target, TrendingUp, Shield, Globe, Smartphone, BarChart3, Award, CheckCircle, XCircle } from "lucide-react";
+import { Download, Printer, BookOpen, Users, Globe, Award, Smartphone, BarChart3, CheckCircle, XCircle } from "lucide-react";
 
 const DigitalSkillsArticle: React.FC = () => {
   const articleRef = useRef<HTMLDivElement>(null);

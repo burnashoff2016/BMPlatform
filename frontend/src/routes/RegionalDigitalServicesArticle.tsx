@@ -2,15 +2,8 @@ import React, { useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell } from "recharts";
 import { Button } from "../components/ui/button";
-import { Download, Printer, ChevronDown, ChevronUp, MapPin, Scale, TrendingUp, Users, Award, Target, Brain, Globe, Building, Clock } from "lucide-react";
+import { Download, Printer, ChevronDown, ChevronUp, MapPin, Scale, TrendingUp, Users, Award, Target } from "lucide-react";
 import { api } from "../lib/api";
-
-const COLORS = ["#3b82f6", "#10b981", "#8b5cf6"];
-const REGION_COLORS = {
-  "Санкт-Петербург": "#3b82f6",
-  "Свердловская область": "#10b981", 
-  "Чеченская Республика": "#8b5cf6"
-};
 
 const RegionalDigitalServicesArticle: React.FC = () => {
   const articleRef = useRef<HTMLDivElement>(null);
@@ -57,12 +50,6 @@ const RegionalDigitalServicesArticle: React.FC = () => {
     { region: "Санкт-Петербург", institution: "Комитет по ИТ", strength: 90 },
     { region: "Свердlovская область", institution: "Минцифры", strength: 95 },
     { region: "Чеченская Республика", institution: "Минтранс и связь", strength: 70 },
-  ];
-
-  const regulatoryData = [
-    { region: "Санкт-Петербург", laws: 12, digitalServices: 85 },
-    { region: "Свердловская область", laws: 18, digitalServices: 100 },
-    { region: "Чеченская Республика", laws: 7, digitalServices: 65 },
   ];
 
   const handlePrint = () => {
@@ -488,7 +475,7 @@ const RegionalDigitalServicesArticle: React.FC = () => {
                         fill="#8884d8"
                         dataKey="strength"
                       >
-                        {institutionalData.map((entry, index) => (
+                        {institutionalData.map((_entry, index) => (
                           <Cell key={`cell-${index}`} fill={digitalMaturityData[index].color} />
                         ))}
                       </Pie>

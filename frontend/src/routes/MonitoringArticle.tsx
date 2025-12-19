@@ -40,7 +40,7 @@ const MonitoringArticle: React.FC = () => {
 
   const sentiment = (data && (data.sentiment ?? data.sentiment_distribution)) || fallback.sentiment;
   const issues = (data && (data.issues ?? data.issues_list)) || fallback.issues;
-  const qualityDistribution = (data && (data.qualityDistribution ?? data.quality_distribution)) || fallback.qualityDistribution;
+
 
 
   const sampleReviews = [
