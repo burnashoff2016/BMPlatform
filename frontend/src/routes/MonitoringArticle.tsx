@@ -161,7 +161,7 @@ const MonitoringArticle: React.FC = () => {
             <ResponsiveContainer>
               <PieChart>
                 <Pie data={sentiment} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={40} outerRadius={80} label>
-                  {sentiment.map((entry: any, index: number) => (
+                  {sentiment.map((_entry: any, index: number) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>

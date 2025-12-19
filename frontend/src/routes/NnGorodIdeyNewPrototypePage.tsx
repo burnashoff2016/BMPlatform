@@ -17,9 +17,7 @@ import {
   Search,
   Menu,
   X,
-  CheckCircle,
-  Clock,
-  Check
+  CheckCircle
 } from "lucide-react";
 
 interface Idea {

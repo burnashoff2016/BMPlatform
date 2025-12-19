@@ -61,7 +61,7 @@ const RegionalDigitalServicesArticle: React.FC = () => {
 
   const regulatoryData = [
     { region: "Санкт-Петербург", laws: 12, digitalServices: 85 },
-    { region: "Свердlovская область", laws: 18, digitalServices: 100 },
+    { region: "Свердловская область", laws: 18, digitalServices: 100 },
     { region: "Чеченская Республика", laws: 7, digitalServices: 65 },
   ];
 

@@ -8,9 +8,7 @@ import {
   Heart, 
   Star,
   User,
-  Building2,
-  Phone,
-  MapPin
+  Phone
 } from 'lucide-react';
 
 const FeedbackPage = () => {

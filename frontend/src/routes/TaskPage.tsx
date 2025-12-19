@@ -958,6 +958,17 @@ const AircraftProgramInsights = () => {
     { year: 2027, actual: 109.7, planned: 109.7 },
   ];
 
+  const aircraftProduction = [
+    { label: '2021', value: 200 },
+    { label: '2022', value: 180 },
+    { label: '2023', value: 175 },
+    { label: '2024', value: 166 },
+    { label: '2025', value: 200 },
+    { label: '2026', value: 250 },
+    { label: '2027', value: 300 },
+    { label: '2030', value: 1000 },
+  ];
+
 
 
 
