@@ -465,7 +465,6 @@ def digital_inclusion_dfo_dataset(
             "authority_name": authority["authority_name"],
             "radar_values": authority_radar
         })
-    ]
     
     return {
         "authorities": authorities_data,

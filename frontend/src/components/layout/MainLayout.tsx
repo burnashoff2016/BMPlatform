@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { Home, Layers, Menu, MessageCircle, Moon, Settings as SettingsIcon, Sun, X } from "lucide-react";
 
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/AuthContextMock"; // Используем фиктивный контекст
 import { useTheme } from "../../context/ThemeContext";
 import { cn } from "../../lib/utils";
 import { Button } from "../ui/button";
