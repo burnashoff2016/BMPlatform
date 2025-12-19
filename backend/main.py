@@ -10,6 +10,31 @@ from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy.orm import Session
 
 from auth import get_current_user, router as auth_router
+from models import User as UserModel
+
+
+def get_current_user_disabled(db: Session = Depends(get_db)):
+    """
+    Функция для временного отключения аутентификации.
+    Создаёт или возвращает пользователя с фиксированным именем.
+    """
+    
+    # Проверяем, существует ли уже пользователь с именем "anonymous"
+    user = db.query(UserModel).filter(UserModel.username == "anonymous").first()
+    
+    if not user:
+        # Создаём пользователя, если его нет
+        user = UserModel(
+            username="anonymous",
+            email="anonymous@example.com",
+            full_name="Anonymous User",
+            hashed_password=""  # Пустой пароль для анонимного пользователя
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    
+    return user
 from config import ALLOWED_ORIGINS, DATA_DIR, STATIC_DIR
 from database import get_db, init_db
 from models import Task, User
@@ -55,7 +80,7 @@ def append_csv_row(file_path: Path, fieldnames: List[str], payload: Dict[str, st
 @app.get("/api/tasks", response_model=List[TaskOut])
 def list_tasks(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_disabled),
 ) -> List[TaskOut]:
     tasks = db.query(Task).order_by(Task.task_number).all()
     return [TaskOut.model_validate(task) for task in tasks]
@@ -65,7 +90,7 @@ def list_tasks(
 def get_task(
     slug: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_disabled),
 ) -> TaskOut:
     task = db.query(Task).filter(Task.slug == slug).first()
     if not task:
@@ -76,7 +101,7 @@ def get_task(
 @app.post("/api/forms/monitoring-kostroma")
 def submit_monitoring_form(
     payload: MonitoringKostromaForm,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_disabled),
 ) -> JSONResponse:
     file_path = DATA_DIR / "monitoring_kostroma_responses.csv"
     append_csv_row(
@@ -90,7 +115,7 @@ def submit_monitoring_form(
 @app.post("/api/forms/crowdsourcing-roads")
 def submit_crowdsourcing_form(
     payload: CrowdsourcingRoadsForm,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_disabled),
 ) -> JSONResponse:
     file_path = DATA_DIR / "crowdsourcing_roads_responses.csv"
     append_csv_row(file_path, ["district", "issue_type", "description", "priority"], payload.model_dump())
@@ -100,7 +125,7 @@ def submit_crowdsourcing_form(
 @app.post("/api/forms/nn-gorod-idey")
 def submit_nn_ideas_form(
     payload: NNGorodIdeyForm,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_disabled),
 ) -> JSONResponse:
     file_path = DATA_DIR / "nn_gorod_idey_ideas.csv"
     append_csv_row(file_path, ["category", "title", "description", "expected_impact"], payload.model_dump())
@@ -110,7 +135,7 @@ def submit_nn_ideas_form(
 @app.post("/api/forms/kpi-suzdal")
 def submit_kpi_feedback(
     payload: KpiSuzdalFeedbackForm,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_disabled),
 ) -> JSONResponse:
     file_path = DATA_DIR / "kpi_suzdal_feedback.csv"
     append_csv_row(
@@ -123,7 +148,7 @@ def submit_kpi_feedback(
 
 @app.get("/api/data/monitoring-kostroma")
 def monitoring_dataset(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_disabled),
 ) -> Dict[str, object]:
     df = pd.read_csv(DATA_DIR / "monitoring_kostroma_responses.csv")
     rating_counts = (
@@ -140,7 +165,7 @@ def monitoring_dataset(
 
 @app.get("/api/data/crowdsourcing-roads")
 def crowdsourcing_dataset(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_disabled),
 ) -> Dict[str, object]:
     df = pd.read_csv(DATA_DIR / "crowdsourcing_roads_responses.csv")
     by_issue = df["issue_type"].value_counts().reset_index(name="count").rename(columns={"index": "issue_type"})
@@ -153,7 +178,7 @@ def crowdsourcing_dataset(
 
 @app.get("/api/data/kpi-suzdal")
 def kpi_suzdal_dataset(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_disabled),
 ) -> Dict[str, object]:
     df = pd.read_csv(DATA_DIR / "kpi_suzdal_monthly.csv")
     return {"monthly": df.to_dict(orient="records")}
@@ -161,7 +186,7 @@ def kpi_suzdal_dataset(
 
 @app.get("/api/data/digital-inequality")
 def digital_inequality_dataset(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_disabled),
 ) -> Dict[str, object]:
     df = pd.read_csv(DATA_DIR / "digital_inequality_regions.csv")
     return {"regions": df.to_dict(orient="records")}
@@ -169,7 +194,7 @@ def digital_inequality_dataset(
 
 @app.get("/api/digital_inequality/report")
 def get_digital_inequality_report(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_disabled),
 ):
     """Return the digital inequality analysis report"""
     import pickle
@@ -298,7 +323,7 @@ def get_digital_inequality_report(
 
 @app.get("/api/digital_inequality/data")
 def get_digital_inequality_data(
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user_disabled)
 ) -> FileResponse:
     """Return the digital inequality dataset as a file"""
     file_path = DATA_DIR / "digital_inequality_regions.csv"
@@ -309,7 +334,7 @@ def get_digital_inequality_data(
 
 @app.get("/api/digital_inequality/model")
 def get_digital_inequality_model(
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user_disabled)
 ) -> FileResponse:
     """Return the digital inequality model file"""
     model_path = Path(__file__).parent / "digital_inequality_model.pkl"
@@ -320,7 +345,7 @@ def get_digital_inequality_model(
 
 @app.get("/api/data/healthcare-nekrasovka")
 def healthcare_nekrasovka_dataset(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_disabled),
 ) -> Dict[str, object]:
     stats_path = NEKRASOVKA_DIR / "coverage_stats.json"
     facilities_path = NEKRASOVKA_DIR / "health_facilities.geojson"
@@ -352,7 +377,7 @@ def healthcare_nekrasovka_dataset(
 
 @app.get("/api/data/regional-digital-services")
 def regional_digital_services_dataset(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_disabled),
 ) -> Dict[str, object]:
     # Получаем данные из существующего источника
     from seed_data import generate_digital_services_summary
@@ -399,7 +424,7 @@ def regional_digital_services_dataset(
 
 @app.get("/api/data/digital-inclusion-dfo")
 def digital_inclusion_dfo_dataset(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_disabled),
 ) -> Dict[str, object]:
     """
     API endpoint для получения данных о цифровой инклюзивности органов власти ДФО

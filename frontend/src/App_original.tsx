@@ -1,6 +1,7 @@
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 
 import MainLayout from "./components/layout/MainLayout";
+import { useAuth } from "./context/AuthContext";
 import DashboardPage from "./routes/DashboardPage";
 import LoginPage from "./routes/LoginPage";
 import TaskPage from "./routes/TaskPage";
@@ -21,13 +22,30 @@ import DigitalIdentityArticle from "./routes/DigitalIdentityArticle";
 import SmartCitiesArticle from "./routes/SmartCitiesArticle";
 import GovtechInnovationArticle from "./routes/GovtechInnovationArticle";
 
+
 import DigitalEthicsArticle from "./routes/DigitalEthicsArticle";
 import MobilityInterfacePage from "./routes/MobilityInterfacePage";
 import SocialRadarPage from "./routes/SocialRadarPage";
 
-// Фиктивный защищенный маршрут, который всегда позволяет доступ
-const ProtectedRouteMock = () => {
-  // В режиме обхода аутентификации всегда разрешаем доступ
+const ProtectedRoute = () => {
+  const { token, user, isLoading } = useAuth();
+
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (isLoading && !user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center text-slate-600">
+        Проверяем сессию...
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
   return <Outlet />;
 };
 
@@ -35,7 +53,7 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route element={<ProtectedRouteMock />}>
+      <Route element={<ProtectedRoute />}>
         <Route path="/" element={<MainLayout />}>
           <Route index element={<DashboardPage />} />
           <Route path="tasks/:slug" element={<TaskPage />} />
