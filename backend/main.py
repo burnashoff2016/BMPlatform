@@ -21,13 +21,8 @@ from schemas import (
     TaskOut,
 )
 
-# Подключаем маршруты аутентификации с отключенной проверкой
-try:
-    from auth_mock import router as auth_mock_router
-    auth_to_use = auth_mock_router
-except ImportError:
-    # Если нет файла с фиктивной аутентификацией, используем оригинальный
-    auth_to_use = auth_router
+# Используем оригинальный auth router, но с фиктивной логикой аутентификации
+auth_to_use = auth_router
 
 app = FastAPI(title="Цифровое государство: учебный портал кейсов")
 app.include_router(auth_to_use)
