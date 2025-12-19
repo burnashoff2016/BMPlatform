@@ -18,4 +18,14 @@ FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./app.db")
 ACCESS_TOKEN_EXPIRE_DELTA = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
-ALLOWED_ORIGINS = [FRONTEND_ORIGIN]
+ALLOWED_ORIGINS = [
+    FRONTEND_ORIGIN,
+    "http://localhost:8000",
+    "http://127.0.0.1:8000", 
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://89.23.97.230",
+    "https://89.23.97.230",  # На случай, если будет HTTPS
+    "http://89.23.97.230:8000",
+    "https://89.23.97.230:8000",
+]
