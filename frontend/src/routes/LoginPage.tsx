@@ -5,17 +5,17 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { Card, CardDescription, CardTitle } from "../components/ui/card";
 import { Input } from "../components/ui/input";
-import { useAuth } from "../context/AuthContext";
-import { api } from "../lib/api";
+import { useAuth } from "../context/AuthContextMock"; // Используем фиктивный контекст
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const { token, setTokenValue, refetchUser } = useAuth();
-  const [username, setUsername] = useState("admin");
-  const [password, setPassword] = useState("admin123");
+  const [username, setUsername] = useState("demo");
+  const [password, setPassword] = useState("demo");
   const [isSubmitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // При использовании фиктивной аутентификации сразу перенаправляем на главную
   if (token) {
     return <Navigate to="/" replace />;
   }
@@ -24,13 +24,17 @@ const LoginPage = () => {
     event.preventDefault();
     setError(null);
     setSubmitting(true);
+    
+    // В режиме фиктивной аутентификации просто устанавливаем токен и перенаправляем
+    // Имитируем успешный логин
     try {
-      const response = await api.post<{ access_token: string }>("/auth/login", { username, password });
-      setTokenValue(response.data.access_token);
+      // В режиме отключенной аутентификации просто устанавливаем токен
+      // и перенаправляем пользователя на главную страницу
+      setTokenValue("mock-token-for-demo"); // Устанавливаем фиктивный токен
       refetchUser();
       navigate("/");
     } catch (err) {
-      setError("Неверный логин или пароль");
+      setError("Произошла ошибка при входе");
     } finally {
       setSubmitting(false);
     }
